@@ -22,6 +22,10 @@ from appWindow.project_options_dialog import ProjectOptionsDialog
 
 APP_ID = "com.ulises.fanzyprojects"
 APP_ICON_NAME = APP_ID
+APP_NAME = "Fanzy Projects"
+APP_AUTHOR = "Ulises Lafuente Ramos"
+APP_VERSION = "1.2.0"
+APP_VERSION_DATE = "15 de octubre de 2026"
 
 VIEW_MODE_LABELS = {
     WorkflowType.CONTINUOUS: "Flujo de trabajo continuo",
@@ -283,6 +287,10 @@ class ProjectWindow(Adw.ApplicationWindow):
         view_menu.append_submenu("Página", pages_menu)
 
         root.append_submenu("Ver", view_menu)
+
+        help_menu = Gio.Menu()
+        help_menu.append("Acerca de…", "app.about")
+        root.append_submenu("Ayuda", help_menu)
         return Gtk.PopoverMenuBar.new_from_model(root)
 
     def _set_status(self, message):
@@ -483,6 +491,22 @@ class ProjectWindow(Adw.ApplicationWindow):
         dialog = ProjectOptionsDialog(project, on_apply=self._apply_project_options)
         dialog.present(self)
 
+    def _build_about_window(self):
+        return Adw.AboutWindow(
+            transient_for=self,
+            application_name=APP_NAME,
+            application_icon=APP_ICON_NAME,
+            version=APP_VERSION,
+            developer_name=APP_AUTHOR,
+            developers=[APP_AUTHOR],
+            copyright="© 2026 {}".format(APP_AUTHOR),
+            license_type=Gtk.License.GPL_3_0,
+            comments="Fecha de la versión: {}.".format(APP_VERSION_DATE),
+        )
+
+    def _on_about_clicked(self, *args):
+        self._build_about_window().present()
+
     def _apply_project_options(self, data):
         project = self.current_project
         if project is None:
@@ -680,6 +704,7 @@ class ProjectApp(Adw.Application):
             "import-project": (self._action_import, None),
             "export-project": (self._action_export, None),
             "delete-project": (self._action_delete, None),
+            "about": (self._action_about, None),
             "quit-request": (self._action_quit_request, ["<Control>q"]),
         }
         for name, (handler, accels) in handlers.items():
@@ -778,3 +803,8 @@ class ProjectApp(Adw.Application):
         window = self.props.active_window
         if window is not None:
             window._on_delete_clicked()
+
+    def _action_about(self, action, param):
+        window = self.props.active_window
+        if window is not None:
+            window._on_about_clicked()

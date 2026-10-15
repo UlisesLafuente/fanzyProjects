@@ -10,11 +10,11 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gtk, GLib
+from gi.repository import Adw, Gtk, GLib, Gio
 
 display_available = Gtk.init_check()
 
-from appWindow.app_window import ProjectApp, ProjectPickerDialog, ProjectWindow, install_stylesheet, STYLE_CSS, install_app_icon, APP_ICON_NAME, install_log_filter, _swallow_libadwaita_measure_warnings, _safe_filename
+from appWindow.app_window import ProjectApp, ProjectPickerDialog, ProjectWindow, install_stylesheet, STYLE_CSS, install_app_icon, APP_ICON_NAME, APP_NAME, APP_AUTHOR, APP_VERSION, APP_VERSION_DATE, install_log_filter, _swallow_libadwaita_measure_warnings, _safe_filename
 from appWindow.global_view import GlobalView
 from appWindow.hour_grid import HourGridView
 from appWindow.main_view import ProjectView
@@ -850,6 +850,34 @@ class TestProjectApp(unittest.TestCase):
         self.assertEqual(_safe_filename("Comic de heroes"), "Comic de heroes")
         self.assertEqual(_safe_filename("A/B:C\\D"), "A-B-C-D")
         self.assertEqual(_safe_filename("   "), "proyecto")
+
+    def test_about_window_shows_app_metadata(self):
+        window = ProjectWindow(application=self.app)
+        about = window._build_about_window()
+        self.assertEqual(about.get_application_name(), APP_NAME)
+        self.assertEqual(about.get_application_icon(), APP_ICON_NAME)
+        self.assertEqual(about.get_version(), APP_VERSION)
+        self.assertEqual(about.get_developer_name(), APP_AUTHOR)
+        self.assertEqual(about.get_license_type(), Gtk.License.GPL_3_0)
+        self.assertIn(APP_VERSION_DATE, about.get_comments())
+        window.destroy()
+
+    def test_help_menu_has_about_entry(self):
+        window = ProjectWindow(application=self.app)
+        model = window._build_menu_bar().get_menu_model()
+        labels = [
+            model.get_item_attribute_value(i, "label", GLib.VariantType.new("s")).get_string()
+            for i in range(model.get_n_items())
+        ]
+        self.assertEqual(labels[-1], "Ayuda")
+        help_model = model.get_item_link(model.get_n_items() - 1, Gio.MENU_LINK_SUBMENU)
+        self.assertIsNotNone(help_model)
+        self.assertEqual(help_model.get_n_items(), 1)
+        action = help_model.get_item_attribute_value(
+            0, Gio.MENU_ATTRIBUTE_ACTION, GLib.VariantType.new("s")
+        ).get_string()
+        self.assertEqual(action, "app.about")
+        window.destroy()
 
 
 @unittest.skipUnless(display_available, "No hay display disponible")
