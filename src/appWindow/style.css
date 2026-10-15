@@ -79,9 +79,8 @@ row:hover {
 .hour-task-label-9 { color: #986a44; }
 
 .global-page {
-    border-radius: 6px;
+    border-radius: 0;
     border: 1px solid alpha(#ffffff, 0.15);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 .global-page-fill-0 { background-color: #3584e4; }

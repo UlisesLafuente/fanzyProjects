@@ -7,10 +7,12 @@ from gi.repository import Gtk
 
 from appWindow.colors import COLOR_COUNT, task_color_indices, most_advanced_completed_task
 
-PAGE_WIDTH = 90
-PAGE_ASPECT = 1.4
+PAGE_WIDTH = 20
+PAGE_HEIGHT = 30
 PAGE_SPACING = 20
-SPREAD_GAP = 28
+SPREAD_GAP = 0
+SPREAD_COLUMN_SPACING = 24
+MAX_CHILDREN_PER_LINE = 1000
 
 
 class GlobalView(Gtk.ScrolledWindow):
@@ -77,57 +79,68 @@ class GlobalView(Gtk.ScrolledWindow):
         flow.add_css_class("global-flow")
         flow.set_column_spacing(PAGE_SPACING)
         flow.set_row_spacing(PAGE_SPACING)
-        flow.set_halign(Gtk.Align.CENTER)
+        flow.set_max_children_per_line(MAX_CHILDREN_PER_LINE)
+        flow.set_selection_mode(Gtk.SelectionMode.NONE)
+        flow.set_halign(Gtk.Align.FILL)
         flow.set_valign(Gtk.Align.START)
+        flow.set_hexpand(True)
         for page_index, page in pages:
             flow.append(self._build_page_widget(page, page_index))
         self.container.append(flow)
 
     def _build_spread(self, pages):
-        rows = [pages[0:1]]
+        spreads = [pages[0:1]]
         remaining = pages[1:]
         for index in range(0, len(remaining), 2):
-            rows.append(remaining[index:index + 2])
-        for row_pages in rows:
+            spreads.append(remaining[index:index + 2])
+
+        flow = Gtk.FlowBox()
+        flow.add_css_class("global-flow")
+        flow.set_column_spacing(SPREAD_COLUMN_SPACING)
+        flow.set_row_spacing(PAGE_SPACING)
+        flow.set_max_children_per_line(MAX_CHILDREN_PER_LINE)
+        flow.set_selection_mode(Gtk.SelectionMode.NONE)
+        flow.set_halign(Gtk.Align.FILL)
+        flow.set_valign(Gtk.Align.START)
+        flow.set_hexpand(True)
+        for row_pages in spreads:
             row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=SPREAD_GAP)
+            row.set_valign(Gtk.Align.START)
             row.set_halign(Gtk.Align.CENTER)
+            row.set_hexpand(False)
             row.add_css_class("global-spread-row")
             for page_index, page in row_pages:
                 row.append(self._build_page_widget(page, page_index))
-            self.container.append(row)
+            flow.append(row)
+        self.container.append(flow)
 
     def _build_page_widget(self, page, page_index):
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        box.add_css_class("global-page-item")
         rect = Gtk.Box()
-        rect.set_size_request(PAGE_WIDTH, int(PAGE_WIDTH * PAGE_ASPECT))
+        rect.set_size_request(PAGE_WIDTH, PAGE_HEIGHT)
+        rect.set_halign(Gtk.Align.CENTER)
+        rect.set_valign(Gtk.Align.START)
+        rect.set_hexpand(False)
         rect.add_css_class("global-page")
-        caption = Gtk.Label(label="")
-        caption.add_css_class("caption")
-        caption.set_halign(Gtk.Align.CENTER)
-        box.append(rect)
-        box.append(caption)
 
         gesture = Gtk.GestureClick()
         gesture.set_button(1)
         gesture.connect("released", self._on_page_released, page)
-        box.add_controller(gesture)
-        box.set_tooltip_text("Ir a la página {}".format(page_index))
+        rect.add_controller(gesture)
 
-        self.page_widgets.append((page, page_index, rect, caption))
-        self.page_boxes.append(box)
-        self._apply_fill(page, page_index, rect, caption)
-        return box
+        self.page_widgets.append((page, page_index, rect))
+        self.page_boxes.append(rect)
+        self._apply_fill(page, page_index, rect)
+        return rect
 
     def _on_page_released(self, gesture, n_press, x, y, page):
         if self.on_page_click is not None:
             self.on_page_click(page)
 
     def refresh_status(self):
-        for page, page_index, rect, caption in self.page_widgets:
-            self._apply_fill(page, page_index, rect, caption)
+        for page, page_index, rect in self.page_widgets:
+            self._apply_fill(page, page_index, rect)
 
-    def _apply_fill(self, page, page_index, rect, caption):
+    def _apply_fill(self, page, page_index, rect):
         for css_class in list(rect.get_css_classes()):
             if css_class == "global-page-neutral" or css_class.startswith("global-page-fill-"):
                 rect.remove_css_class(css_class)
@@ -137,8 +150,8 @@ class GlobalView(Gtk.ScrolledWindow):
         else:
             index = self._color_index.get(task.getTaskName(), 0) % COLOR_COUNT
             rect.add_css_class("global-page-fill-{}".format(index))
-        caption.set_text(
-            "Página {}\n{:.0f} % completado".format(
+        rect.set_tooltip_text(
+            "Página {} — {:.0f} % completado".format(
                 page_index, page.getPercentileCompleted()
             )
         )

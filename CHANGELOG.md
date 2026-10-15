@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0]
+
+### Cambios
+- La **vista global** representa cada página como un rectángulo pequeño (30 alto × 20 ancho) **sin esquinas redondeadas**, que fluye en hileras ocupando todo el ancho para mostrar muchas páginas de un vistazo sin necesidad de scroll. Las páginas **mantienen su tamaño** al redimensionar la vista.
+- En **páginas enfrentadas**, cada par se muestra **pegado, sin espacio** entre ambas y los pares **fluyen en varias columnas** según el ancho de la vista.
+- El **nombre de la página y su porcentaje** dejan de mostrarse en la vista global y pasan a un **tooltip** que aparece al pasar el cursor sobre cada página.
+
 ## [1.1.0]
 
 ### Añadido

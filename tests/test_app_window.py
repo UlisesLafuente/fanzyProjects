@@ -393,33 +393,54 @@ class TestGlobalView(unittest.TestCase):
         self.view.show_project(project)
         self.assertEqual(len(self.view.page_widgets), 3)
 
+    def _spreads(self):
+        flow = self._children(self.view.container)[0]
+        return [self._children(item)[0] for item in self._children(flow)]
+
+    def test_spread_rows_do_not_expand_horizontally(self):
+        project = self._make_project(5)
+        self.view.set_pages_mode(GlobalView.SPREAD)
+        self.view.show_project(project)
+        for spread in self._spreads():
+            self.assertFalse(spread.get_hexpand())
+            self.assertEqual(spread.get_halign(), Gtk.Align.CENTER)
+
     def test_spread_groups_first_alone_then_pairs(self):
         project = self._make_project(5)
         self.view.set_pages_mode(GlobalView.SPREAD)
         self.view.show_project(project)
         self.assertEqual(len(self.view.page_widgets), 5)
-        rows = self._children(self.view.container)
-        self.assertEqual(len(rows), 3)
-        self.assertEqual(len(self._children(rows[0])), 1)
-        self.assertEqual(len(self._children(rows[1])), 2)
-        self.assertEqual(len(self._children(rows[2])), 2)
+        spreads = self._spreads()
+        self.assertEqual(len(spreads), 3)
+        self.assertEqual(len(self._children(spreads[0])), 1)
+        self.assertEqual(len(self._children(spreads[1])), 2)
+        self.assertEqual(len(self._children(spreads[2])), 2)
 
     def test_spread_odd_last_page_alone(self):
         project = self._make_project(4)
         self.view.set_pages_mode(GlobalView.SPREAD)
         self.view.show_project(project)
-        rows = self._children(self.view.container)
-        self.assertEqual(len(rows), 3)
-        self.assertEqual(len(self._children(rows[0])), 1)
-        self.assertEqual(len(self._children(rows[1])), 2)
-        self.assertEqual(len(self._children(rows[2])), 1)
+        spreads = self._spreads()
+        self.assertEqual(len(spreads), 3)
+        self.assertEqual(len(self._children(spreads[0])), 1)
+        self.assertEqual(len(self._children(spreads[1])), 2)
+        self.assertEqual(len(self._children(spreads[2])), 1)
+
+    def test_spread_flows_in_multiple_columns(self):
+        project = self._make_project(7)
+        self.view.set_pages_mode(GlobalView.SPREAD)
+        self.view.show_project(project)
+        flow = self._children(self.view.container)[0]
+        self.assertIsInstance(flow, Gtk.FlowBox)
+        self.assertEqual(flow.get_halign(), Gtk.Align.FILL)
+        self.assertTrue(flow.get_hexpand())
 
     def test_color_uses_last_completed_task(self):
         boceto = Task("Boceto", 2)
         tinta = Task("Tinta", 3)
         project = Project("Comic", [Page([boceto, tinta])])
         self.view.show_project(project)
-        page, _, rect, _ = self.view.page_widgets[0]
+        page, _, rect = self.view.page_widgets[0]
         self.assertTrue(rect.has_css_class("global-page-neutral"))
 
         boceto.setHoursCompleted(2)
@@ -431,13 +452,48 @@ class TestGlobalView(unittest.TestCase):
         self.assertTrue(rect.has_css_class("global-page-fill-1"))
         self.assertFalse(rect.has_css_class("global-page-fill-0"))
 
-    def test_caption_shows_page_number_and_percent(self):
+    def test_tooltip_shows_page_number_and_percent(self):
         project = self._make_project(1)
         self.view.show_project(project)
-        _, page_index, _, caption = self.view.page_widgets[0]
+        _, page_index, rect = self.view.page_widgets[0]
         self.assertEqual(page_index, 1)
-        self.assertIn("Página 1", caption.get_text())
-        self.assertIn("0 %", caption.get_text())
+        tooltip = rect.get_tooltip_text()
+        self.assertIn("Página 1", tooltip)
+        self.assertIn("0 %", tooltip)
+
+    def test_page_size_is_small(self):
+        project = self._make_project(1)
+        self.view.show_project(project)
+        _, _, rect = self.view.page_widgets[0]
+        width, height = rect.get_size_request()
+        self.assertEqual((width, height), (20, 30))
+
+    def test_page_rect_does_not_expand_horizontally(self):
+        project = self._make_project(3)
+        self.view.show_project(project)
+        for _, _, rect in self.view.page_widgets:
+            self.assertFalse(rect.get_hexpand())
+            self.assertEqual(rect.get_halign(), Gtk.Align.CENTER)
+
+    def test_separated_flow_is_not_capped_at_default_columns(self):
+        project = self._make_project(3)
+        self.view.show_project(project)
+        flow = self._children(self.view.container)[0]
+        self.assertGreater(flow.get_max_children_per_line(), 7)
+
+    def test_separated_pages_flow_without_centering(self):
+        project = self._make_project(3)
+        self.view.show_project(project)
+        flow = self._children(self.view.container)[0]
+        self.assertIsInstance(flow, Gtk.FlowBox)
+        self.assertEqual(flow.get_halign(), Gtk.Align.FILL)
+
+    def test_spread_pairs_have_no_gap(self):
+        project = self._make_project(3)
+        self.view.set_pages_mode(GlobalView.SPREAD)
+        self.view.show_project(project)
+        spreads = self._spreads()
+        self.assertEqual(spreads[1].get_spacing(), 0)
 
     def test_show_empty_clears_widgets(self):
         project = self._make_project(2)
