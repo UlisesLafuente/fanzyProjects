@@ -1,0 +1,5 @@
+Cambios en la vista global (global_view):
+El objetivo de la vista global es ofrecer una vista completa del proyecto de un solo vistazo, para lo cual son necesarios varios cambios:
+    -Las páginas se representarán como rectángulos pequeños, de 30hx20w pixels sin esquinas redondeadas, y fluirán en hileras ocupando el espacio horizontal, de este modo cabrán muchas páginas en la visualización sin necesidad de hacer scroll.
+    -Cuando esté activada la vista de páginas por pares, estas se mostrarán pegadas sin espacio entre ambas.
+    -Al hacer las páginas más pequeñas para que quepan más, se limita mucho el espacio para otra información, así que se eliminará de la vista global el nombre de la página y su porcentaje, y esa información pasará a un tooltip que aparecerá al pasar el cursor por encima de cada página individual.
