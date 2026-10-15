@@ -2,8 +2,7 @@
 
 Una aplicación de escritorio para organizar y llevar el control de tus proyectos de cómic.
 
-![Alternative text](/2026-09-21_13-43.png "Screenshot")
-![Alternative text](/2026-09-21_13-45.png "Screenshot")
+![Alternative text](/2026-10-15_11-51.png "Screenshot")
 
 ## Qué hace
 
